@@ -292,6 +292,7 @@ The test data has specific edge cases the agent must handle correctly:
 - [x] Deploy backend to Render
 - [x] Deploy database to Neon PostgreSQL
 - [x] Test all 8 dataset edge cases ✓
+- [x] Security fixes: Fix 1-4 (cross-tenant isolation, SQL injection prevention, account resolution, time grounding)
 
 ### Future Enhancements
 - [ ] Record ~5 min demo video
@@ -300,6 +301,20 @@ The test data has specific edge cases the agent must handle correctly:
 - [ ] Add action confirmation UI cards
 - [ ] Add conversation history persistence
 - [ ] Add analytics/logging dashboard
+
+## Design Decisions
+
+### Customer-Facing Bot: Read-Only
+Customers can query their own orders, tickets, contracts, and policies, but cannot initiate state-changing actions (credits, escalations, cancellations). This is intentional for B2B:
+- ParcelPilot customers have dedicated CSMs for operational decisions
+- Financial actions (credits > ₹1,000) require manager approval anyway
+- Reduces surface area for accidental harmful actions
+
+### Staff Bot: Full Action Capability
+Internal support staff can search all customer data, prepare actions (with preview + confirmation), and execute them. This allows efficient support workflows while maintaining two-phase confirmation for high-stakes changes.
+
+### Time-Grounded Agent
+The agent uses `dataset_meta.snapshot_at` (2026-08-16 11:00 Asia/Kolkata) as the reference time for all SLA/lateness calculations, not the server's wall-clock date. This makes reasoning reproducible and dataset-specific.
 
 ## Support
 
