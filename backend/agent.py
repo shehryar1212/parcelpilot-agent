@@ -16,34 +16,13 @@ from db.config import get_connection
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Cache reference time on startup to avoid repeated database queries
-_CACHED_REFERENCE_TIME = None
-
-def _load_reference_time() -> Optional[str]:
-    """Load the dataset snapshot time from dataset_meta table (called once on startup)."""
-    try:
-        conn = get_connection()
-        result = conn.execute(text("SELECT value FROM dataset_meta WHERE key = 'snapshot_at'"))
-        row = result.fetchone()
-        if row:
-            ref_time = row[0]
-            print(f"✓ Reference time loaded on startup: {ref_time}")
-            return ref_time
-        else:
-            print("✗ snapshot_at key not found in dataset_meta")
-            return None
-    except Exception as e:
-        print(f"✗ Error loading reference time on startup: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
-
 def get_reference_time() -> Optional[str]:
-    """Get the cached reference time (loaded once on startup)."""
-    global _CACHED_REFERENCE_TIME
-    if _CACHED_REFERENCE_TIME is None:
-        _CACHED_REFERENCE_TIME = _load_reference_time()
-    return _CACHED_REFERENCE_TIME
+    """Get reference time from environment variable or hardcoded default."""
+    # Try env var first, fall back to hardcoded value (2026-08-16 11:00 Asia/Kolkata)
+    ref_time = os.getenv("REFERENCE_TIME", "2026-08-16 11:00:00")
+    if ref_time:
+        print(f"✓ Using reference time: {ref_time}")
+    return ref_time
 
 
 # System prompt encoding source precedence and key rules
