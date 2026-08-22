@@ -90,7 +90,7 @@ CREATE INDEX IF NOT EXISTS idx_doc_chunks_account ON doc_chunks(customer_account
 
 CREATE TABLE IF NOT EXISTS agent_actions (
     action_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    action_type     TEXT NOT NULL CHECK (action_type IN ('escalation', 'ticket_update', 'follow_up_task')),
+    action_type     TEXT NOT NULL CHECK (action_type IN ('escalation', 'ticket_update', 'follow_up_task', 'cancellation_request')),
     account_id      TEXT NOT NULL REFERENCES accounts(account_id),
     ticket_id       TEXT REFERENCES tickets(ticket_id),
     -- Mocked session identity – e.g. 'customer:ACCT-002' or 'staff:rohit'.

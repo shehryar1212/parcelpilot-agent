@@ -69,9 +69,13 @@ When answering questions, use this order of authority:
    - Returns current state (created_at, status, etc.)
    - Does NOT return SLA targets, policies, or terms (use search_documents for those)
 
-3. **prepare_action** - Propose an action (escalation, ticket update, follow-up task)
+3. **prepare_action** - Propose an action (escalation, ticket update, follow-up task, or cancellation request)
    - Shows preview to user for confirmation
    - Must be confirmed before execution (two-phase)
+   - **Cancellation requests** (customer-initiated): For cancellation_request, include a fee determination in preview_text. Before preparing:
+     1. Query the order (query_structured_data, order_by_id) to confirm it belongs to this customer
+     2. Determine if a cancellation fee applies: check the customer's contract FIRST (source precedence), then default SOP
+     3. Include the fee in preview_text so customer confirms with full info, e.g. "Cancel ORD-1001 — no fee applies per your contract" or "Cancel ORD-2001 — ₹250 fee applies (past the 30-minute free-cancellation window)"
 
 ## Example Scenarios
 - **Customer asks about cancellation fee**: Search their contract first, then default SOP
@@ -193,14 +197,18 @@ def run_agent(
             "type": "function",
             "function": {
                 "name": "prepare_action",
-                "description": "Propose an action (escalation, ticket update, follow-up task) that requires user confirmation before execution.",
+                "description": "Propose an action (escalation, ticket update, follow-up task, or cancellation request) that requires user confirmation before execution.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "action_type": {
                             "type": "string",
-                            "enum": ["escalation", "ticket_update", "follow_up_task"],
-                            "description": "Type of action",
+                            "enum": ["escalation", "ticket_update", "follow_up_task", "cancellation_request"],
+                            "description": "Type of action. cancellation_request may be initiated by a customer for their own order; the other three are staff-only.",
+                        },
+                        "order_id": {
+                            "type": "string",
+                            "description": "Required for cancellation_request — the order being cancelled.",
                         },
                         "payload": {
                             "type": "object",
@@ -303,11 +311,41 @@ def run_agent(
                         tool_args["account_id"] = account_id
                     result = query_structured_data(**tool_args)
                 elif tool_name == "prepare_action":
-                    # Enforce access control: only staff can prepare actions
-                    if not is_staff:
-                        result = {"error": "Only staff can prepare actions"}
+                    action_type = tool_args.get("action_type")
+
+                    if action_type == "cancellation_request":
+                        order_id_arg = tool_args.get("order_id")
+                        if not order_id_arg:
+                            result = {"error": "order_id is required for cancellation_request"}
+                        else:
+                            # Server-enforced ownership check — never trust the model here.
+                            # Customers: scoped to their own account_id (from session).
+                            # Staff: unscoped, same as their existing order lookups elsewhere.
+                            lookup_account_id = None if is_staff else account_id
+                            order = query_structured_data(
+                                query_type="order_by_id",
+                                order_id=order_id_arg,
+                                account_id=lookup_account_id,
+                            )
+                            if not order:
+                                result = {"error": "Order not found or not accessible to this session"}
+                            else:
+                                result = prepare_action(
+                                    action_type="cancellation_request",
+                                    account_id=order["account_id"],
+                                    payload={**tool_args.get("payload", {}), "order_id": order_id_arg},
+                                    preview_text=tool_args.get("preview_text"),
+                                    requested_by=str(session),
+                                    ticket_id=tool_args.get("ticket_id"),
+                                )
+
+                    elif not is_staff:
+                        result = {"error": "Only staff can prepare this type of action"}
+
                     else:
-                        # Resolve account_id from ticket_id (server-side, never trust model)
+                        # --- unchanged: existing staff-only path for escalation /
+                        # ticket_update / follow_up_task. Do not modify anything below
+                        # this line — it's already fixed and verified. ---
                         resolved_account_id = None
                         ticket_id_arg = tool_args.get("ticket_id")
                         if ticket_id_arg:
@@ -318,15 +356,16 @@ def run_agent(
                             result = {"error": "Could not resolve account_id — provide a valid ticket_id"}
                         else:
                             result = prepare_action(
-                                action_type=tool_args.get("action_type"),
+                                action_type=action_type,
                                 account_id=resolved_account_id,
                                 payload=tool_args.get("payload", {}),
                                 preview_text=tool_args.get("preview_text"),
                                 requested_by=str(session),
                                 ticket_id=ticket_id_arg,
                             )
-                            if "action_id" in result:
-                                actions.append(result)
+
+                    if "action_id" in result:
+                        actions.append(result)
                 else:
                     result = {"error": f"Unknown tool: {tool_name}"}
             except Exception as e:
