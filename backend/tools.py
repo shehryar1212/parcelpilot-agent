@@ -51,22 +51,19 @@ def search_documents(
 
     conn = get_connection()
 
-    # Build filter conditions
-    filters = []
-
-    # Never include deprecated docs by default
-    filters.append("status != 'deprecated'")
+    # Build filter conditions with parameterized queries
+    filters = ["status != 'deprecated'"]
+    params = {}
 
     # If account_id provided, include customer-specific contracts + general docs
     if account_id:
-        # Customer: only their contract + general docs
-        filters.append(f"(customer_account_id = '{account_id}' OR customer_account_id IS NULL)")
-    # If no account_id (staff): include ALL contracts + general docs (no filter on customer_account_id)
+        filters.append("(customer_account_id = :account_id OR customer_account_id IS NULL)")
+        params["account_id"] = account_id
 
     # If doc_types specified, filter by those
     if doc_types:
-        type_list = ",".join([f"'{t}'" for t in doc_types])
-        filters.append(f"doc_type IN ({type_list})")
+        filters.append("doc_type = ANY(:doc_types)")
+        params["doc_types"] = doc_types
 
     where_clause = " AND ".join(filters)
 
@@ -78,15 +75,16 @@ def search_documents(
     SELECT
         id, source_file, doc_type, status, customer_account_id,
         section_number, section_title, content,
-        1 - (embedding <=> '{embedding_str}'::vector) as similarity
+        1 - (embedding <=> :embedding::vector) as similarity
     FROM doc_chunks
     WHERE {where_clause}
     ORDER BY similarity DESC
     LIMIT 5
     """
+    params["embedding"] = embedding_str
 
     try:
-        result = conn.execute(text(sql))
+        result = conn.execute(text(sql), params)
         rows = result.fetchall()
         chunks = [
             {
