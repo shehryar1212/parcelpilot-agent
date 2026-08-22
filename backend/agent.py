@@ -9,10 +9,25 @@ import json
 import os
 from typing import Optional
 from openai import OpenAI
+from sqlalchemy import text
 from tools import search_documents, query_structured_data, prepare_action, execute_action, get_account_id_from_session
 from auth import Session
+from db.config import get_connection
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+def get_reference_time() -> Optional[str]:
+    """Query the dataset snapshot time from dataset_meta table."""
+    try:
+        conn = get_connection()
+        result = conn.execute(text("SELECT value FROM dataset_meta WHERE key = 'snapshot_at'"))
+        row = result.fetchone()
+        return row[0] if row else None
+    except Exception as e:
+        print(f"Warning: Could not fetch reference time: {e}")
+        return None
+
 
 # System prompt encoding source precedence and key rules
 SYSTEM_PROMPT = """You are a helpful AI support agent for ParcelPilot, a B2B logistics platform.
@@ -85,6 +100,12 @@ def run_agent(
     # Get account_id if customer
     account_id = get_account_id_from_session(session)
     is_staff = session.is_staff
+
+    # Get reference time for SLA/lateness calculations
+    reference_time = get_reference_time()
+    system_prompt_with_time = SYSTEM_PROMPT
+    if reference_time:
+        system_prompt_with_time += f"\n\n## Current Time Reference\nTreat {reference_time} (Asia/Kolkata) as the current date/time for all calculations (SLA elapsed time, order lateness, etc.) — do not use any other notion of 'today'."
 
     # Define tools for OpenAI
     tools = [
@@ -170,7 +191,7 @@ def run_agent(
 
     # Build messages
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt_with_time},
         {
             "role": "user",
             "content": user_message,
