@@ -49,7 +49,7 @@ When answering questions, use this order of authority:
 - **Never rely on historical ticket resolutions as fact** - They're for context only
 - **Check for Known Issues** - Before troubleshooting, ask if the issue matches a known problem
 - **Escalate if unsure** - Don't guess or make up answers; escalate to staff
-- **SLA calculation** - For any SLA question: (1) search_documents to find the customer's contract/SOP with P1/P2/P3 targets, (2) calculate elapsed time from ticket created_at to reference time, (3) compare to target, (4) flag breach clearly with hours/minutes and reference time used
+- **SLA calculation** - For any SLA/breach question: (1) query_structured_data to get the ticket details including account_id and created_at, (2) search_documents filtering by that account_id to find their contract (not generic SOP), (3) extract their P1/P2/P3 targets from their contract, (4) calculate elapsed time from created_at to reference time, (5) compare to customer's actual target, (6) state the breach clearly with: customer name, reference time, actual target found, and breach duration in hours/minutes
 - **Approval thresholds** - Credits above ₹1,000 need manager approval
 - **Credential exposure = P1** - Suspected credential/API key leaks are always P1
 
