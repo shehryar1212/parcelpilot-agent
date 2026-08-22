@@ -1,13 +1,17 @@
 from sqlalchemy import create_engine, text
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import QueuePool
 import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg://localhost:5432/parcelpilot")
 
-# NullPool for dev/testing; use QueuePool for production
+# Use QueuePool for stable connection pooling with Neon
+# Avoid NullPool which closes every connection immediately (causes protocol violations on Render)
 engine = create_engine(
     DATABASE_URL,
-    poolclass=NullPool,
+    poolclass=QueuePool,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,  # Test connections before using them
     echo=False,
 )
 
