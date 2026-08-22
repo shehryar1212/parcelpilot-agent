@@ -1,6 +1,11 @@
 # ParcelPilot AI Agent
 
-A multi-role AI chatbot for B2B logistics (ParcelPilot) supporting customer-facing and internal support workflows. Built with FastAPI, Next.js, Postgres, and OpenAI.
+A production-ready AI chatbot for B2B logistics (ParcelPilot) supporting customer-facing and internal support workflows. Built with FastAPI, Next.js, Postgres, and OpenAI.
+
+**Live Demo:**
+- **Frontend:** https://frontend-lilac-pi-66.vercel.app
+- **Backend:** https://parcelpilot-agent-ler7.onrender.com
+- **Database:** Neon PostgreSQL (pgvector)
 
 ## Architecture
 
@@ -239,28 +244,26 @@ orders = query_structured_data("orders", account_id="ACCT-001")
 assert any(o.order_id == "ORD-1001" for o in orders)
 ```
 
-## Deployment
+## Deployment (Production)
 
-### Neon (PostgreSQL)
+### Current Setup
+- **Frontend:** Vercel (https://frontend-lilac-pi-66.vercel.app)
+- **Backend:** Render (https://parcelpilot-agent-ler7.onrender.com)
+- **Database:** Neon PostgreSQL
 
-1. Create account at neon.tech
-2. Create project and database
-3. Copy connection string to `.env`: `DATABASE_URL=postgresql://...@neon.tech/...`
-4. Run data pipeline scripts again (idempotent)
+### Environment Variables (Required)
+```
+OPENAI_API_KEY=sk-...
+DATABASE_URL=postgresql+psycopg://...@neon.tech/...
+NEXT_PUBLIC_API_URL=https://parcelpilot-agent-ler7.onrender.com
+FRONTEND_URL=https://frontend-lilac-pi-66.vercel.app
+```
 
-### Vercel (Frontend)
-
+### Deploy Steps
 1. Push to GitHub
-2. Connect repo to Vercel
-3. Set `NEXT_PUBLIC_API_URL` to production backend URL
-4. Deploy
-
-### Railway / Fly.io (Backend)
-
-1. Add Procfile: `web: python main.py`
-2. Connect repo to Railway / Fly
-3. Set `DATABASE_URL` env var
-4. Deploy
+2. Vercel auto-deploys frontend on push
+3. Render auto-deploys backend on push
+4. Load data into Neon: `python db/embed_chunks.py && python db/load_data.py`
 
 ## Known Dataset Traps
 
@@ -275,18 +278,28 @@ The test data has specific edge cases the agent must handle correctly:
 7. **TKT-501 SLA breach** (Northstar, P1, 15 min target) – already breached
 8. **TKT-503 needs escalation** – not in supplied docs, don't guess
 
-## Next Steps
+## Status: Production-Ready ✅
 
-- [ ] Load data via chunk_documents.py, embed_chunks.py, load_data.py
-- [ ] Implement `search_documents` tool
-- [ ] Implement `query_structured_data` tool
-- [ ] Implement `prepare_action` / `execute_action` tools
-- [ ] Build agent loop with OpenAI (backend/agent.py)
-- [ ] Wire chat endpoint to agent
-- [ ] Polish chat UI (confirmation cards, tool transparency)
-- [ ] Deploy to Neon + Vercel + Railway
+### Completed
+- [x] Load data via chunk_documents.py, embed_chunks.py, load_data.py
+- [x] Implement `search_documents` tool with metadata filtering
+- [x] Implement `query_structured_data` tool for orders/tickets/accounts
+- [x] Implement `prepare_action` / `execute_action` tools (two-phase)
+- [x] Build agent loop with OpenAI gpt-4o
+- [x] Wire chat endpoint to agent
+- [x] Chat UI with tool transparency and session switching
+- [x] Deploy frontend to Vercel
+- [x] Deploy backend to Render
+- [x] Deploy database to Neon PostgreSQL
+- [x] Test all 8 dataset edge cases ✓
+
+### Future Enhancements
 - [ ] Record ~5 min demo video
-- [ ] Write architecture note + product note
+- [ ] Write architecture note
+- [ ] Write product note (roadmap for v2 features)
+- [ ] Add action confirmation UI cards
+- [ ] Add conversation history persistence
+- [ ] Add analytics/logging dashboard
 
 ## Support
 
