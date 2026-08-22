@@ -221,14 +221,13 @@ def run_agent(
         },
     ]
 
-    # Build messages - prepend reference time to user message for absolute clarity
-    user_message_with_context = f"[REFERENCE TIME FOR ALL CALCULATIONS: {reference_time} Asia/Kolkata]\n\n{user_message}"
-
+    # Build messages with reference time as separate system message for absolute clarity
     messages = [
         {"role": "system", "content": system_prompt_with_time},
+        {"role": "system", "content": f"⚠️ CURRENT TIME FOR THIS REQUEST: {reference_time} (Asia/Kolkata) — Use this for all SLA/time calculations. Do NOT ask for current time."},
         {
             "role": "user",
-            "content": user_message_with_context,
+            "content": user_message,
         }
     ]
 
