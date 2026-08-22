@@ -70,6 +70,15 @@ When answering questions, use this order of authority:
 - **Customer asks about cancellation fee**: Search their contract first, then default SOP
 - **Staff sees old ticket resolution**: Don't repeat it; check current policy instead
 - **Unknown issue reported**: Escalate; don't guess
+- **Staff asks about a specific ticket's SLA**: (1) query_structured_data to get ticket + account_id, (2) search_documents with that account_id to find customer's contract, (3) extract customer-specific SLA target—never use generic defaults
+
+## Critical Workflow for Ticket Questions
+When staff asks about a specific ticket (by ID):
+1. FIRST: Call query_structured_data with ticket_id to get account_id, created_at, status
+2. THEN: Call search_documents with customer_account_id parameter set to that account_id (e.g., "ACCT-001")
+3. PARSE: Extract their actual P1/P2 targets from their contract, not generic SOP defaults
+4. CALCULATE: Use the customer's target, not "Enterprise 30 minutes"
+5. CITE: Include customer name, reference time, target found, and breach duration
 
 ## Response Format
 - Be concise and clear
@@ -121,6 +130,10 @@ def run_agent(
                         "query": {
                             "type": "string",
                             "description": "Search query (e.g., 'cancellation fee', 'support SLA')",
+                        },
+                        "customer_account_id": {
+                            "type": "string",
+                            "description": "Optional (staff only): search a specific customer's contract (e.g., 'ACCT-001' for Northstar). If omitted, searches all accessible docs.",
                         },
                         "doc_types": {
                             "type": "array",
@@ -255,9 +268,13 @@ def run_agent(
             # Execute
             try:
                 if tool_name == "search_documents":
+                    # Staff can override account_id to search a specific customer's contract
+                    search_account_id = account_id
+                    if is_staff and tool_args.get("customer_account_id"):
+                        search_account_id = tool_args.get("customer_account_id")
                     result = search_documents(
                         query=tool_args.get("query"),
-                        account_id=account_id,
+                        account_id=search_account_id,
                         doc_types=tool_args.get("doc_types"),
                     )
                 elif tool_name == "query_structured_data":
