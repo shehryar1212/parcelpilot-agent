@@ -55,10 +55,13 @@ def search_documents(
     filters = ["status != 'deprecated'"]
     params = {}
 
-    # If account_id provided, include customer-specific contracts + general docs
+    # If account_id provided, include their contract + general docs
     if account_id:
         filters.append("(customer_account_id = :account_id OR customer_account_id IS NULL)")
         params["account_id"] = account_id
+    else:
+        # Staff searching without specific account: only return general docs, not other customers' contracts
+        filters.append("customer_account_id IS NULL")
 
     # If doc_types specified, filter by those
     if doc_types:
