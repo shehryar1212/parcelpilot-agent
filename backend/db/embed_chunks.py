@@ -81,6 +81,8 @@ def main():
 
             except Exception as e:
                 print(f"  ✗ Error embedding chunk {i}: {e}")
+                import traceback
+                traceback.print_exc()
 
         conn.commit()
 
