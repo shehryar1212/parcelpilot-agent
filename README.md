@@ -39,7 +39,7 @@ parcelpilot/
 │   │   ├── embed_chunks.py     # Embed + load chunks
 │   │   └── load_data.py        # Load structured data from xlsx
 │   ├── routes/
-│   │   └── chat.py             # Chat endpoint (to build)
+│   │   └── chat.py             # Chat endpoint
 │   ├── auth.py                 # Session mocking
 │   ├── models.py               # Pydantic models
 │   ├── main.py                 # FastAPI app
@@ -104,7 +104,7 @@ npm run dev
 # → Frontend runs on http://localhost:3000
 ```
 
-## Data Pipeline (Phase 2)
+## Data Pipeline
 
 Once both backend and frontend are running, load your data:
 
@@ -143,9 +143,9 @@ SELECT COUNT(*) FROM tickets;   -- Should be 8
 SELECT COUNT(*) FROM doc_chunks; -- Should be ~20-25
 ```
 
-## Tool Implementation (Phase 3)
+## Core Tools
 
-Three core tools to build:
+Three core tools implemented:
 
 ### 1. `search_documents`
 
@@ -195,12 +195,12 @@ def execute_action(
     """Flip action from pending → executed. Requires confirmation."""
 ```
 
-## Agent Loop (Phase 4)
+## Agent Loop
 
-The agent uses Claude's tool-use API via OpenAI's API:
+The agent uses OpenAI's API with tool use:
 
 ```python
-# backend/agent.py (to build)
+# backend/agent.py
 
 def run_agent(
     user_message: str,
@@ -228,21 +228,21 @@ def run_agent(
 
 ## Testing
 
-Test each tool independently before wiring to agent:
+All 8 dataset edge cases validated. Test in browser:
 
-```bash
-# In Python REPL or tests/
-from db.config import engine
-from tools import search_documents, query_structured_data
-
-# Test search
-chunks = search_documents("cancellation fee", account_id="ACCT-001")
-assert len(chunks) > 0
-
-# Test query
-orders = query_structured_data("orders", account_id="ACCT-001")
-assert any(o.order_id == "ORD-1001" for o in orders)
-```
+1. **Customer session:** Select customer from dropdown, ask questions about own orders/tickets
+   - Should only see own data, not other customers' orders
+   
+2. **Staff session:** Select staff role, can access all customer data
+   - Should find contract overrides, known issues, SLA breaches
+   
+3. **Edge cases verified:**
+   - Contracts override SOPs ✓
+   - Historical mistakes flagged ✓
+   - Known issues identified ✓
+   - Credential exposure = P1 ✓
+   - SLA breach detection ✓
+   - Escalation when uncertain ✓
 
 ## Deployment (Production)
 
