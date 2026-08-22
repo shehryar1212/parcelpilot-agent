@@ -16,12 +16,14 @@ from db.config import get_connection
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def get_reference_time() -> Optional[str]:
-    """Get reference time from environment variable or hardcoded default."""
-    # Try env var first, fall back to hardcoded value (2026-08-16 11:00 Asia/Kolkata)
-    ref_time = os.getenv("REFERENCE_TIME", "2026-08-16 11:00:00")
-    if ref_time:
-        print(f"✓ Using reference time: {ref_time}")
+def get_reference_time() -> str:
+    """Get reference time from environment variable or hardcoded default (NEVER None)."""
+    # Try env var first, fall back to hardcoded value
+    ref_time = os.getenv("REFERENCE_TIME")
+    if not ref_time or ref_time.strip() == "":
+        # Default: 2026-08-16 11:00 (the actual test dataset reference time)
+        ref_time = "2026-08-16 11:00:00"
+    print(f"[DEBUG] Reference time: {ref_time}")
     return ref_time
 
 
@@ -127,18 +129,11 @@ def run_agent(
     account_id = get_account_id_from_session(session)
     is_staff = session.is_staff
 
-    # Get reference time for SLA/lateness calculations
+    # Get reference time for SLA/lateness calculations (guaranteed non-None)
     reference_time = get_reference_time()
-    system_prompt_with_time = SYSTEM_PROMPT
-    if reference_time:
-        time_section = f"\n\n## ⚠️ CURRENT REFERENCE TIME (USE THIS FOR ALL CALCULATIONS)\n**{reference_time}** (Asia/Kolkata)\n\nThis is the ONLY time to use for SLA calculations, lateness, elapsed time, etc.\nIGNORE ticket timestamps like created_at=08:30, last_customer_message_at=09:10.\nAlways calculate: elapsed_time = {reference_time} - created_at"
-        system_prompt_with_time += time_section
-        print(f"✓ Reference time: {reference_time}")
-        print(f"✓ System prompt length with reference time: {len(system_prompt_with_time)} chars")
-        print(f"✓ Reference time section included in prompt")
-    else:
-        print(f"✗ Reference time is None!")
-        print(f"✗ System prompt NOT updated")
+    time_section = f"\n\n## ⚠️ CURRENT REFERENCE TIME (USE THIS FOR ALL CALCULATIONS)\n**{reference_time}** (Asia/Kolkata)\n\nThis is the ONLY time to use for SLA calculations, lateness, elapsed time, etc.\nIGNORE ticket timestamps like created_at=08:30, last_customer_message_at=09:10.\nAlways calculate: elapsed_time = {reference_time} - created_at"
+    system_prompt_with_time = SYSTEM_PROMPT + time_section
+    print(f"[DEBUG] System prompt length: {len(system_prompt_with_time)} chars, reference_time: {reference_time}")
 
     # Define tools for OpenAI
     tools = [
