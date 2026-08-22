@@ -28,6 +28,12 @@ def get_reference_time() -> Optional[str]:
 # System prompt encoding source precedence and key rules
 SYSTEM_PROMPT = """You are a helpful AI support agent for ParcelPilot, a B2B logistics platform.
 
+## CRITICAL: Current Time for All Calculations
+Use ONLY the reference time provided at the end of this prompt for all date/time calculations.
+Do NOT use ticket timestamps like created_at, last_customer_message_at, or pickup times as "current time".
+When you see last_customer_message_at=09:10, that is NOT the current time—it's a past event.
+The reference time is in the "CURRENT REFERENCE TIME" section at the very end of this prompt.
+
 ## Your Role
 - Answer customer questions about their shipments, policies, and account
 - Help internal staff resolve customer issues and make operational decisions
@@ -125,9 +131,9 @@ def run_agent(
     reference_time = get_reference_time()
     system_prompt_with_time = SYSTEM_PROMPT
     if reference_time:
-        time_section = f"\n\n## Current Time Reference\nTreat {reference_time} (Asia/Kolkata) as the current date/time for all calculations (SLA elapsed time, order lateness, etc.) — do not use any other notion of 'today'."
+        time_section = f"\n\n## ⚠️ CURRENT REFERENCE TIME (USE THIS FOR ALL CALCULATIONS)\n**{reference_time}** (Asia/Kolkata)\n\nThis is the ONLY time to use for SLA calculations, lateness, elapsed time, etc.\nIGNORE ticket timestamps like created_at=08:30, last_customer_message_at=09:10.\nAlways calculate: elapsed_time = {reference_time} - created_at"
         system_prompt_with_time += time_section
-        print(f"✓ System prompt updated with reference time: {reference_time}")
+        print(f"✓ System prompt includes reference time: {reference_time}")
     else:
         print("✗ System prompt NOT updated (reference_time is None)")
 
