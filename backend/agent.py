@@ -249,16 +249,26 @@ def run_agent(
                     if not is_staff:
                         result = {"error": "Only staff can prepare actions"}
                     else:
-                        result = prepare_action(
-                            action_type=tool_args.get("action_type"),
-                            account_id=tool_args.get("account_id", account_id or "unknown"),
-                            payload=tool_args.get("payload", {}),
-                            preview_text=tool_args.get("preview_text"),
-                            requested_by=str(session),
-                            ticket_id=tool_args.get("ticket_id"),
-                        )
-                        if "action_id" in result:
-                            actions.append(result)
+                        # Resolve account_id from ticket_id (server-side, never trust model)
+                        resolved_account_id = None
+                        ticket_id_arg = tool_args.get("ticket_id")
+                        if ticket_id_arg:
+                            ticket = query_structured_data(query_type="ticket_by_id", ticket_id=ticket_id_arg)
+                            resolved_account_id = ticket.get("account_id") if ticket else None
+
+                        if not resolved_account_id:
+                            result = {"error": "Could not resolve account_id — provide a valid ticket_id"}
+                        else:
+                            result = prepare_action(
+                                action_type=tool_args.get("action_type"),
+                                account_id=resolved_account_id,
+                                payload=tool_args.get("payload", {}),
+                                preview_text=tool_args.get("preview_text"),
+                                requested_by=str(session),
+                                ticket_id=ticket_id_arg,
+                            )
+                            if "action_id" in result:
+                                actions.append(result)
                 else:
                     result = {"error": f"Unknown tool: {tool_name}"}
             except Exception as e:
