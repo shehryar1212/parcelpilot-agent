@@ -221,12 +221,14 @@ def run_agent(
         },
     ]
 
-    # Build messages
+    # Build messages - prepend reference time to user message for absolute clarity
+    user_message_with_context = f"[REFERENCE TIME FOR ALL CALCULATIONS: {reference_time} Asia/Kolkata]\n\n{user_message}"
+
     messages = [
         {"role": "system", "content": system_prompt_with_time},
         {
             "role": "user",
-            "content": user_message,
+            "content": user_message_with_context,
         }
     ]
 
