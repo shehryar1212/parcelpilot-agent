@@ -23,9 +23,17 @@ def get_reference_time() -> Optional[str]:
         conn = get_connection()
         result = conn.execute(text("SELECT value FROM dataset_meta WHERE key = 'snapshot_at'"))
         row = result.fetchone()
-        return row[0] if row else None
+        if row:
+            ref_time = row[0]
+            print(f"✓ Reference time fetched: {ref_time}")
+            return ref_time
+        else:
+            print("✗ snapshot_at key not found in dataset_meta")
+            return None
     except Exception as e:
-        print(f"Warning: Could not fetch reference time: {e}")
+        print(f"✗ Error fetching reference time: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
@@ -130,7 +138,11 @@ def run_agent(
     reference_time = get_reference_time()
     system_prompt_with_time = SYSTEM_PROMPT
     if reference_time:
-        system_prompt_with_time += f"\n\n## Current Time Reference\nTreat {reference_time} (Asia/Kolkata) as the current date/time for all calculations (SLA elapsed time, order lateness, etc.) — do not use any other notion of 'today'."
+        time_section = f"\n\n## Current Time Reference\nTreat {reference_time} (Asia/Kolkata) as the current date/time for all calculations (SLA elapsed time, order lateness, etc.) — do not use any other notion of 'today'."
+        system_prompt_with_time += time_section
+        print(f"✓ System prompt updated with reference time: {reference_time}")
+    else:
+        print("✗ System prompt NOT updated (reference_time is None)")
 
     # Define tools for OpenAI
     tools = [
