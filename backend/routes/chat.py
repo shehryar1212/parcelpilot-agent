@@ -21,6 +21,11 @@ async def chat_message(
     session: Session = Depends(get_session),
 ):
     """Chat endpoint. Routes to agent loop."""
+    print(f"\n{'='*60}")
+    print(f"Chat message from {session}")
+    print(f"Message: {req.message}")
+    print(f"{'='*60}\n")
+
     result = run_agent(
         user_message=req.message,
         session=session,

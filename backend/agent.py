@@ -133,9 +133,12 @@ def run_agent(
     if reference_time:
         time_section = f"\n\n## ⚠️ CURRENT REFERENCE TIME (USE THIS FOR ALL CALCULATIONS)\n**{reference_time}** (Asia/Kolkata)\n\nThis is the ONLY time to use for SLA calculations, lateness, elapsed time, etc.\nIGNORE ticket timestamps like created_at=08:30, last_customer_message_at=09:10.\nAlways calculate: elapsed_time = {reference_time} - created_at"
         system_prompt_with_time += time_section
-        print(f"✓ System prompt includes reference time: {reference_time}")
+        print(f"✓ Reference time: {reference_time}")
+        print(f"✓ System prompt length with reference time: {len(system_prompt_with_time)} chars")
+        print(f"✓ Reference time section included in prompt")
     else:
-        print("✗ System prompt NOT updated (reference_time is None)")
+        print(f"✗ Reference time is None!")
+        print(f"✗ System prompt NOT updated")
 
     # Define tools for OpenAI
     tools = [
