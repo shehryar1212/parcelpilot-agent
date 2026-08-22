@@ -285,7 +285,7 @@ The test data has specific edge cases the agent must handle correctly:
 - [x] Implement `search_documents` tool with metadata filtering
 - [x] Implement `query_structured_data` tool for orders/tickets/accounts
 - [x] Implement `prepare_action` / `execute_action` tools (two-phase)
-- [x] Build agent loop with OpenAI gpt-4o
+- [x] Build agent loop with OpenAI gpt-4o-mini
 - [x] Wire chat endpoint to agent
 - [x] Chat UI with tool transparency and session switching
 - [x] Deploy frontend to Vercel
@@ -293,6 +293,7 @@ The test data has specific edge cases the agent must handle correctly:
 - [x] Deploy database to Neon PostgreSQL
 - [x] Test all 8 dataset edge cases ✓
 - [x] Security fixes: Fix 1-4 (cross-tenant isolation, SQL injection prevention, account resolution, time grounding)
+- [x] Customer-initiated cancellation requests (narrowly scoped, server-enforced ownership)
 
 ### Future Enhancements
 - [ ] Record ~5 min demo video
@@ -304,11 +305,13 @@ The test data has specific edge cases the agent must handle correctly:
 
 ## Design Decisions
 
-### Customer-Facing Bot: Read-Only
-Customers can query their own orders, tickets, contracts, and policies, but cannot initiate state-changing actions (credits, escalations, cancellations). This is intentional for B2B:
-- ParcelPilot customers have dedicated CSMs for operational decisions
-- Financial actions (credits > ₹1,000) require manager approval anyway
-- Reduces surface area for accidental harmful actions
+### Customer-Facing Bot: Read + Cancellation Request Only
+Customers can query their own orders, tickets, contracts, and policies. They can also request cancellation of their own orders via `prepare_action(action_type="cancellation_request", order_id=...)`. This is narrowly scoped:
+- Customers can only cancel their own orders (server-enforced account_id check)
+- Cancellation fee determination uses source precedence (contract > SOP)
+- Cannot initiate credits, escalations, or other state changes
+- ParcelPilot CSMs handle broader operational decisions
+- Reduces surface area while enabling a key self-service action
 
 ### Staff Bot: Full Action Capability
 Internal support staff can search all customer data, prepare actions (with preview + confirmation), and execute them. This allows efficient support workflows while maintaining two-phase confirmation for high-stakes changes.
