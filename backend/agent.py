@@ -241,7 +241,7 @@ def run_agent(
                 elif tool_name == "query_structured_data":
                     query_type = tool_args.get("query_type")
                     # Enforce access control
-                    if not is_staff and query_type in ["orders", "tickets", "account_details"]:
+                    if not is_staff and query_type in ["orders", "tickets", "account_details", "order_by_id", "ticket_by_id"]:
                         tool_args["account_id"] = account_id
                     result = query_structured_data(**tool_args)
                 elif tool_name == "prepare_action":

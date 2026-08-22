@@ -198,10 +198,12 @@ def query_structured_data(
         ]
 
     elif query_type == "order_by_id" and order_id:
-        result = conn.execute(
-            text("SELECT * FROM orders WHERE order_id = :id"),
-            {"id": order_id}
-        )
+        sql = "SELECT * FROM orders WHERE order_id = :id"
+        params = {"id": order_id}
+        if account_id:
+            sql += " AND account_id = :account_id"
+            params["account_id"] = account_id
+        result = conn.execute(text(sql), params)
         row = result.fetchone()
         if row:
             return {
@@ -222,10 +224,12 @@ def query_structured_data(
         return None
 
     elif query_type == "ticket_by_id" and ticket_id:
-        result = conn.execute(
-            text("SELECT * FROM tickets WHERE ticket_id = :id"),
-            {"id": ticket_id}
-        )
+        sql = "SELECT * FROM tickets WHERE ticket_id = :id"
+        params = {"id": ticket_id}
+        if account_id:
+            sql += " AND account_id = :account_id"
+            params["account_id"] = account_id
+        result = conn.execute(text(sql), params)
         row = result.fetchone()
         if row:
             return {
