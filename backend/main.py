@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from db.config import init_db
 from routes import chat
+from agent import get_reference_time
 
 load_dotenv()
 
@@ -13,6 +14,9 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     # Startup
     init_db()
+    # Load reference time once on startup (cached for entire lifetime)
+    ref_time = get_reference_time()
+    print(f"✓ Backend startup complete. Reference time: {ref_time}")
     yield
     # Shutdown
 
