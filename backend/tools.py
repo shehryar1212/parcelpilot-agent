@@ -70,7 +70,8 @@ def search_documents(
 
     where_clause = " AND ".join(filters)
 
-    # Format embedding as vector string
+    # Format embedding as PostgreSQL vector literal (not a parameter)
+    # Parameters + ::vector cast don't work together in SQLAlchemy; use string interpolation instead
     embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
 
     # Search by embedding similarity
@@ -78,13 +79,12 @@ def search_documents(
     SELECT
         id, source_file, doc_type, status, customer_account_id,
         section_number, section_title, content,
-        1 - (embedding <=> :embedding::vector) as similarity
+        1 - (embedding <=> '{embedding_str}'::vector) as similarity
     FROM doc_chunks
     WHERE {where_clause}
     ORDER BY similarity DESC
     LIMIT 5
     """
-    params["embedding"] = embedding_str
 
     try:
         result = conn.execute(text(sql), params)
