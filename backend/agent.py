@@ -63,6 +63,10 @@ When answering questions, use this order of authority:
    - Use for finding SLA targets, credit terms, policies, known issues
    - Returns relevant contract sections ranked by relevance
    - (Contracts and policies contain SLA targets; structured data does not)
+   - **IMPORTANT**: When asked about a specific customer (by name or account_id), pass `customer_account_id` parameter
+     to access their signed contract. For example:
+     - Query about "LumenWorks credit" → look up their account_id, then search_documents(..., customer_account_id="ACCT-002")
+     - This ensures you find customer-specific contract terms, not just generic SOPs
 
 2. **query_structured_data** - Look up orders, tickets, account details (operational data only)
    - Use for: getting ticket status, order details, account info
