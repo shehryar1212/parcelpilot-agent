@@ -208,7 +208,7 @@ def run_agent(
     context: dict = {},
 ) -> AgentResponse:
     """
-    Agent loop with OpenAI gpt-4o.
+    Agent loop with OpenAI gpt-4o-mini.
     
     1. Encode source precedence in system prompt
     2. Call search_documents with metadata filters
@@ -262,7 +262,7 @@ FRONTEND_URL=https://frontend-lilac-pi-66.vercel.app
 ### Deploy Steps
 1. Push to GitHub
 2. Vercel auto-deploys frontend on push
-3. Render auto-deploys backend on push
+3. Render backend: may require manual redeploy if auto-deploy doesn't trigger (check Render dashboard)
 4. Load data into Neon: `python db/embed_chunks.py && python db/load_data.py`
 
 ## Known Dataset Traps
