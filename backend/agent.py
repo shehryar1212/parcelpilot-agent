@@ -10,7 +10,7 @@ import os
 from typing import Optional
 from openai import OpenAI
 from sqlalchemy import text
-from tools import search_documents, query_structured_data, prepare_action, execute_action, get_account_id_from_session
+from tools import search_documents, query_structured_data, prepare_action, execute_action, get_account_id_from_session, resolve_account_id
 from auth import Session
 from db.config import get_connection
 
@@ -159,7 +159,7 @@ def run_agent(
                         },
                         "customer_account_id": {
                             "type": "string",
-                            "description": "Optional (staff only): search a specific customer's contract (e.g., 'ACCT-001' for Northstar). If omitted, searches all accessible docs.",
+                            "description": "Optional (staff only): search a specific customer's contract by account ID (e.g., 'ACCT-001') or customer name (e.g., 'Northstar' or 'LumenWorks'). If omitted, searches all accessible docs.",
                         },
                         "doc_types": {
                             "type": "array",
@@ -302,7 +302,7 @@ def run_agent(
                     # Staff can override account_id to search a specific customer's contract
                     search_account_id = account_id
                     if is_staff and tool_args.get("customer_account_id"):
-                        search_account_id = tool_args.get("customer_account_id")
+                        search_account_id = resolve_account_id(tool_args.get("customer_account_id"))
                     result = search_documents(
                         query=tool_args.get("query"),
                         account_id=search_account_id,

@@ -16,6 +16,30 @@ from datetime import datetime
 import json
 
 # ---------------------------------------------------------------------------
+# Helper: Resolve account ID from name or ID
+# ---------------------------------------------------------------------------
+
+def resolve_account_id(identifier: str) -> Optional[str]:
+    """Accept either an account_id or a customer name; resolve to account_id."""
+    if not identifier:
+        return None
+    conn = get_connection()
+    # First try exact account_id match
+    row = conn.execute(
+        text("SELECT account_id FROM accounts WHERE account_id = :id"),
+        {"id": identifier}
+    ).fetchone()
+    if row:
+        return row[0]
+    # Fall back to name lookup
+    row = conn.execute(
+        text("SELECT account_id FROM accounts WHERE account_name ILIKE :name"),
+        {"name": f"%{identifier}%"}
+    ).fetchone()
+    return row[0] if row else None
+
+
+# ---------------------------------------------------------------------------
 # Tool 1: search_documents
 # ---------------------------------------------------------------------------
 
@@ -74,9 +98,11 @@ def search_documents(
     # Parameters + ::vector cast don't work together in SQLAlchemy; use string interpolation instead
     embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
 
+    # When account_id is scoped, return full set (20); else 10 for staff unscoped searches
+    # Small corpus (~17 chunks) means tight LIMIT risks dropping the relevant contract
+    limit = 20 if account_id else 10
+
     # Search by embedding similarity
-    # Increased from LIMIT 5 to 10: corpus is small (~17 chunks), and higher limit
-    # reduces chance a correct chunk gets edged out by near-duplicate or loosely-related result
     sql = f"""
     SELECT
         id, source_file, doc_type, status, customer_account_id,
@@ -85,7 +111,7 @@ def search_documents(
     FROM doc_chunks
     WHERE {where_clause}
     ORDER BY similarity DESC
-    LIMIT 10
+    LIMIT {limit}
     """
 
     try:
