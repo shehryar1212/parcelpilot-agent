@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from typing import Optional
 from auth import Session, get_session
 from agent import run_agent
-from tools import search_documents
 
 router = APIRouter()
 
@@ -38,22 +37,6 @@ async def chat_message(
         actions=result["actions"],
         tool_calls=result["tool_calls"],
     )
-
-@router.get("/debug/search")
-async def debug_search(
-    query: str,
-    account_id: Optional[str] = None,
-    session: Session = Depends(get_session),
-):
-    """Debug endpoint: test search_documents directly"""
-    results = search_documents(query=query, account_id=account_id)
-    return {
-        "query": query,
-        "account_id": account_id,
-        "results_count": len(results),
-        "results": results,
-    }
-
 
 @router.get("/chat/history")
 async def chat_history(
