@@ -12,7 +12,7 @@ A production ready AI chatbot for B2B logistics (ParcelPilot) supporting custome
 ```
 frontend (Next.js)        backend (FastAPI)              database (Postgres)
    ↓                         ↓                              ↓
-  chat UI        →  agent loop (gpt-4o)   →     structured data
+  chat UI        →  agent loop (gpt-4o mini)   →     structured data
   (React)            ↓                         doc chunks (pgvector)
                3 tools:
                - search_documents
