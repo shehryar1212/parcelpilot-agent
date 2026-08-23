@@ -1,6 +1,6 @@
 # ParcelPilot AI Agent
 
-A production-ready AI chatbot for B2B logistics (ParcelPilot) supporting customer-facing and internal support workflows. Built with FastAPI, Next.js, Postgres, and OpenAI.
+A production ready AI chatbot for B2B logistics (ParcelPilot) supporting customer facing and internal support workflows. Built with FastAPI, Next.js, Postgres and OpenAI.
 
 **Live Demo:**
 - **Frontend:** https://frontend-lilac-pi-66.vercel.app
@@ -295,14 +295,6 @@ The test data has specific edge cases the agent must handle correctly:
 - [x] Security fixes: Fix 1-4 (cross-tenant isolation, SQL injection prevention, account resolution, time grounding)
 - [x] Customer-initiated cancellation requests (narrowly scoped, server-enforced ownership)
 
-### Future Enhancements
-- [ ] Record ~5 min demo video
-- [ ] Write architecture note
-- [ ] Write product note (roadmap for v2 features)
-- [ ] Add action confirmation UI cards
-- [ ] Add conversation history persistence
-- [ ] Add analytics/logging dashboard
-
 ## Design Decisions
 
 ### Customer-Facing Bot: Read + Cancellation Request Only
@@ -324,7 +316,3 @@ The agent uses `dataset_meta.snapshot_at` (2026-08-16 11:00 Asia/Kolkata) as the
 - Setup issues? See [SETUP.md](./SETUP.md)
 - Stuck on a piece? Ask me directly
 - Need to adjust? Code is yours—refactor as needed
-
----
-
-Built with 🚀 for ParcelPilot AI assessment.
