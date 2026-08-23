@@ -75,6 +75,8 @@ def search_documents(
     embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
 
     # Search by embedding similarity
+    # Increased from LIMIT 5 to 10: corpus is small (~17 chunks), and higher limit
+    # reduces chance a correct chunk gets edged out by near-duplicate or loosely-related result
     sql = f"""
     SELECT
         id, source_file, doc_type, status, customer_account_id,
@@ -83,7 +85,7 @@ def search_documents(
     FROM doc_chunks
     WHERE {where_clause}
     ORDER BY similarity DESC
-    LIMIT 5
+    LIMIT 10
     """
 
     try:

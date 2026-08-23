@@ -44,12 +44,16 @@ def main():
 
     inserted = 0
     with engine.connect() as conn:
+        # Delete existing chunks to ensure idempotent re-run (no duplicates)
+        print("Clearing existing chunks (idempotent mode)...")
+        conn.execute(text("DELETE FROM doc_chunks"))
+        conn.commit()
         for i, chunk in enumerate(chunks):
             try:
                 # Embed
                 embedding = embed_chunk(client, chunk["content"])
 
-                # Insert into database
+                # Insert into database (after bulk DELETE above, no conflicts possible)
                 sql = """
                 INSERT INTO doc_chunks (
                     source_file, doc_type, status, customer_account_id,
@@ -58,7 +62,6 @@ def main():
                     :source_file, :doc_type, :status, :customer_account_id,
                     :effective_date, :section_number, :section_title, :content, :embedding
                 )
-                ON CONFLICT DO NOTHING
                 """
 
                 params = {
